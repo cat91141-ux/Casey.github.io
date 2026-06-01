@@ -130,9 +130,27 @@
       font-family: monospace;
     }
     .formula span { color: #ffa657; }
+
+    /* LOGO 右上角 */
+    .logo-corner {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 999;
+    }
+    .logo-corner img {
+      width: 120px;
+      opacity: 0.92;
+    }
   </style>
 </head>
 <body>
+
+  <!-- LOGO 右上角 -->
+  <div class="logo-corner">
+    <img src="logo.png" alt="教學暢快感 重新定義">
+  </div>
+
   <h1>🔬 自由落體虛擬實驗室</h1>
   <p class="subtitle">調整高度，觀察球的落下過程</p>
 
