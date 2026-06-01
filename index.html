@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自由落體虛擬實驗室</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #58a6ff;
+      margin-bottom: 6px;
+      letter-spacing: 2px;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #8b949e;
+      margin-bottom: 30px;
+    }
+    .main {
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .canvas-wrap {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    canvas {
+      display: block;
+      border-radius: 8px;
+      background: #010409;
+    }
+    .panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      width: 260px;
+    }
+    .panel h2 {
+      font-size: 1rem;
+      color: #58a6ff;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 8px;
+    }
+    label {
+      font-size: 0.85rem;
+      color: #8b949e;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: #58a6ff;
+      margin-bottom: 16px;
+    }
+    .value-display {
+      font-size: 1.1rem;
+      color: #f0f6fc;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-start { background: #238636; color: white; }
+    .btn-reset { background: #da3633; color: white; }
+    .data-box {
+      margin-top: 20px;
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      padding: 5px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-label { color: #8b949e; }
+    .data-val { color: #79c0ff; font-weight: bold; }
+    .formula-box {
+      margin-top: 30px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 560px;
+    }
+    .formula-box h2 {
+      font-size: 1rem;
+      color: #58a6ff;
+      margin-bottom: 12px;
+    }
+    .formula {
+      font-size: 1.1rem;
+      color: #e6edf3;
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      font-family: monospace;
+    }
+    .formula span { color: #ffa657; }
+  </style>
+</head>
+<body>
+  <h1>🔬 自由落體虛擬實驗室</h1>
+  <p class="subtitle">調整高度，觀察球的落下過程</p>
+
+  <div class="main">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="200" height="400"></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>⚙️ 實驗設定</h2>
+      <label>初始高度：</label>
+      <input type="range" id="heightSlider" min="50" max="400" value="300" step="10">
+      <div class="value-display" id="heightVal">高度：300 m</div>
+
+      <button class="btn btn-start" onclick="startExp()">▶ 開始實驗</button>
+      <button class="btn btn-reset" onclick="resetExp()">↺ 重置</button>
+
+      <div class="data-box">
+        <h2 style="color:#58a6ff;font-size:0.9rem;margin-bottom:8px;">📊 即時數據</h2>
+        <div class="data-row">
+          <span class="data-label">時間</span>
+          <span class="data-val" id="dTime">0.00 s</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">速度</span>
+          <span class="data-val" id="dVel">0.00 m/s</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">位移</span>
+          <span class="data-val" id="dDist">0.00 m</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">加速度</span>
+          <span class="data-val">9.8 m/s²</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <h2>📐 公式說明</h2>
+    <div class="formula">位移：<span>y = ½ × g × t²</span></div>
+    <div class="formula">速度：<span>v = g × t</span></div>
+    <div class="formula">重力加速度：<span>g = 9.8 m/s²</span></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const g = 9.8;
+    let animId = null;
+    let startTime = null;
+    let running = false;
+
+    function getHeight() {
+      return parseInt(document.getElementById('heightSlider').value);
+    }
+
+    document.getElementById('heightSlider').addEventListener('input', function() {
+      document.getElementById('heightVal').textContent = '高度：' + this.value + ' m';
+      if (!running) drawStatic();
+    });
+
+    function drawStatic() {
+      const H = getHeight();
+      const scale = 380 / 400;
+      const ballY = 10;
+      ctx.clearRect(0, 0, 200, 400);
+      // ground
+      ctx.fillStyle = '#58a6ff';
+      ctx.fillRect(0, 390, 200, 10);
+      // height line
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#30363d';
+      ctx.beginPath();
+      ctx.moveTo(100, ballY + 10);
+      ctx.lineTo(100, 390);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // ball
+      ctx.beginPath();
+      ctx.arc(100, ballY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffa657';
+      ctx.fill();
+    }
+
+    function startExp() {
+      if (running) return;
+      running = true;
+      startTime = null;
+      const H = getHeight();
+      const totalTime = Math.sqrt(2 * H / g);
+
+      function animate(ts) {
+        if (!startTime) startTime = ts;
+        const t = (ts - startTime) / 1000;
+        const dist = 0.5 * g * t * t;
+        const vel = g * t;
+        const progress = Math.min(dist / H, 1);
+        const ballY = 10 + progress * 370;
+
+        ctx.clearRect(0, 0, 200, 400);
+        ctx.fillStyle = '#58a6ff';
+        ctx.fillRect(0, 390, 200, 10);
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#30363d';
+        ctx.beginPath();
+        ctx.moveTo(100, 10);
+        ctx.lineTo(100, 390);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(100, ballY, 10, 0, Math.PI * 2);
+        ctx.fillStyle = progress < 1 ? '#ffa657' : '#ff7b72';
+        ctx.fill();
+
+        document.getElementById('dTime').textContent = t.toFixed(2) + ' s';
+        document.getElementById('dVel').textContent = vel.toFixed(2) + ' m/s';
+        document.getElementById('dDist').textContent = Math.min(dist, H).toFixed(2) + ' m';
+
+        if (progress < 1) {
+          animId = requestAnimationFrame(animate);
+        } else {
+          running = false;
+          document.getElementById('dTime').textContent = totalTime.toFixed(2) + ' s';
+          document.getElementById('dVel').textContent = (g * totalTime).toFixed(2) + ' m/s';
+          document.getElementById('dDist').textContent = H.toFixed(2) + ' m';
+        }
+      }
+      animId = requestAnimationFrame(animate);
+    }
+
+    function resetExp() {
+      if (animId) cancelAnimationFrame(animId);
+      running = false;
+      startTime = null;
+      document.getElementById('dTime').textContent = '0.00 s';
+      document.getElementById('dVel').textContent = '0.00 m/s';
+      document.getElementById('dDist').textContent = '0.00 m';
+      drawStatic();
+    }
+
+    drawStatic();
+  </script>
+</body>
+</html>
