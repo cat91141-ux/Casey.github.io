@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>碰撞虛擬實驗</title>
+  <style>
+    body { margin: 0; background: #0a1a0a; color: white; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { color: #88ff88; }
+    canvas { background: #111a11; border: 2px solid #88ff88; border-radius: 10px; margin: 10px 0; }
+    .controls { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+    label { font-size: 14px; color: #aaffaa; }
+    input[type=range] { width: 100px; }
+    button { padding: 10px 25px; background: #88ff88; color: #0a1a0a; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .info { font-size: 14px; color: #ffdd88; margin-top: 8px; text-align: center; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>💥 碰撞虛擬實驗</h1>
+  <canvas id="canvas" width="360" height="200"></canvas>
+  <div class="controls">
+    <div>
+      <label>A 質量：<span id="mAVal">2</span> kg</label><br>
+      <input type="range" id="mA" min="1" max="5" value="2" oninput="document.getElementById('mAVal').textContent=this.value">
+    </div>
+    <div>
+      <label>A 速度：<span id="vAVal">4</span> m/s</label><br>
+      <input type="range" id="vA" min="1" max="8" value="4" oninput="document.getElementById('vAVal').textContent=this.value">
+    </div>
+    <div>
+      <label>B 質量：<span id="mBVal">2</span> kg</label><br>
+      <input type="range" id="mB" min="1" max="5" value="2" oninput="document.getElementById('mBVal').textContent=this.value">
+    </div>
+  </div>
+  <button onclick="startCollision()">開始實驗</button>
+  <div class="info" id="info">按下開始實驗</div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let animId = null;
+    let xA, xB, velA, velB, mA, mB, collided;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#223322';
+      ctx.fillRect(0, 150, canvas.width, 50);
+      // 球A
+      ctx.beginPath();
+      ctx.arc(xA, 130, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff6666';
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 13px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('A', xA, 135);
+      // 球B
+      ctx.beginPath();
+      ctx.arc(xB, 130, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#6699ff';
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.fillText('B', xB, 135);
+    }
+
+    function startCollision() {
+      if (animId) cancelAnimationFrame(animId);
+      mA = parseFloat(document.getElementById('mA').value);
+      velA = parseFloat(document.getElementById('vA').value);
+      mB = parseFloat(document.getElementById('mB').value);
+      velB = 0;
+      xA = 40; xB = 300;
+      collided = false;
+
+      const pBefore = mA * velA + mB * velB;
+
+      function animate() {
+        xA += velA * 0.8;
+        xB += velB * 0.8;
+
+        if (!collided && xA + 20 >= xB - 20) {
+          // 彈性碰撞公式
+          const newVA = ((mA - mB) * velA + 2 * mB * velB) / (mA + mB);
+          const newVB = ((mB - mA) * velB + 2 * mA * velA) / (mA + mB);
+          velA = newVA;
+          velB = newVB;
+          collided = true;
+          const pAfter = mA * velA + mB * velB;
+          document.getElementById('info').textContent =
+            `碰撞後 A 速度：${velA.toFixed(2)} m/s　B 速度：${velB.toFixed(2)} m/s\n碰撞前動量：${pBefore.toFixed(2)}　碰撞後動量：${pAfter.toFixed(2)}（守恆✅）`;
+        }
+
+        draw();
+
+        if (xA > -30 && xA < 400 && xB > -30 && xB < 400) {
+          animId = requestAnimationFrame(animate);
+        }
+      }
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    xA = 40; xB = 300;
+    draw();
+  </script>
+</body>
+</html>

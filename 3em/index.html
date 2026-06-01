@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電磁感應虛擬實驗</title>
+  <style>
+    body { margin: 0; background: #1a0a2e; color: white; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { color: #ffaa00; }
+    canvas { background: #1a1133; border: 2px solid #ffaa00; border-radius: 10px; margin: 10px 0; }
+    .controls { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+    label { font-size: 14px; color: #ffddaa; }
+    input[type=range] { width: 110px; }
+    button { padding: 10px 25px; background: #ffaa00; color: #1a0a2e; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .info { font-size: 15px; color: #88ffdd; margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>⚡ 電磁感應虛擬實驗</h1>
+  <canvas id="canvas" width="360" height="300"></canvas>
+  <div class="controls">
+    <div>
+      <label>磁鐵速度：<span id="spVal">3</span></label><br>
+      <input type="range" id="speed" min="1" max="8" value="3" oninput="document.getElementById('spVal').textContent=this.value">
+    </div>
+    <div>
+      <label>線圈匝數：<span id="coilVal">5</span></label><br>
+      <input type="range" id="coil" min="1" max="10" value="5" oninput="document.getElementById('coilVal').textContent=this.value">
+    </div>
+  </div>
+  <button onclick="startEM()">開始實驗</button>
+  <div class="info" id="info">按下開始實驗</div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let animId = null;
+    let magnetX = 30;
+    let dir = 1;
+    let running = false;
+
+    function drawCoil(n) {
+      const cx = canvas.width / 2;
+      ctx.strokeStyle = '#ffaa00';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < n; i++) {
+        const x = cx - 40 + i * (80 / n);
+        ctx.beginPath();
+        ctx.ellipse(cx, 150, 40, 15 + i * 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // 線圈框
+      ctx.strokeStyle = '#ffcc44';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - 45, 120, 90, 60);
+    }
+
+    function drawMagnet(x) {
+      // N極
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(x, 130, 30, 40);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('N', x + 15, 156);
+      // S極
+      ctx.fillStyle = '#4444ff';
+      ctx.fillRect(x + 30, 130, 30, 40);
+      ctx.fillStyle = 'white';
+      ctx.fillText('S', x + 45, 156);
+    }
+
+    function drawGalvanometer(emf) {
+      const cx = canvas.width / 2;
+      ctx.beginPath();
+      ctx.arc(cx, 255, 28, 0, Math.PI * 2);
+      ctx.strokeStyle = '#aaaaaa';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#222';
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('G', cx, 259);
+      // 指針
+      const angle = (emf / 50) * (Math.PI / 3);
+      ctx.beginPath();
+      ctx.moveTo(cx, 255);
+      ctx.lineTo(cx + 22 * Math.sin(angle), 255 - 22 * Math.cos(angle));
+      ctx.strokeStyle = '#ff4444';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const n = parseInt(document.getElementById('coil').value);
+      const speed = parseFloat(document.getElementById('speed').value);
+      const cx = canvas.width / 2;
+
+      // 磁場線
+      ctx.strokeStyle = 'rgba(100,200,255,0.15)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(magnetX + 60, 140 + i * 8);
+        ctx.lineTo(cx - 45, 140 + i * 8);
+        ctx.stroke();
+      }
+
+      drawCoil(n);
+      drawMagnet(magnetX);
+
+      // 計算感應電動勢（模擬）
+      const dist = Math.abs(magnetX + 30 - cx);
+      const emf = dir * speed * n * Math.max(0, 60 - dist) * 0.8;
+      drawGalvanometer(emf);
+
+      // 導線
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 45, 150);
+      ctx.lineTo(cx - 45, 227);
+      ctx.lineTo(cx - 28, 227);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 45, 150);
+      ctx.lineTo(cx + 45, 227);
+      ctx.lineTo(cx + 28, 227);
+      ctx.stroke();
+
+      document.getElementById('info').textContent =
+        `感應電動勢：${emf.toFixed(1)} mV　方向：${emf > 0 ? '正向 →' : emf < 0 ? '← 反向' : '無'}`;
+    }
+
+    function startEM() {
+      if (animId) cancelAnimationFrame(animId);
+      magnetX = 30;
+      dir = 1;
+      running = true;
+      const speed = parseFloat(document.getElementById('speed').value);
+
+      function animate() {
+        magnetX += dir * speed * 0.5;
+        if (magnetX > canvas.width - 30) { dir = -1; }
+        if (magnetX < 10) { dir = 1; }
+        draw();
+        animId = requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
